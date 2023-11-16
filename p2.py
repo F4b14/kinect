@@ -6,6 +6,8 @@ import mediapipe as mp
 from threading import Thread
 import time
 import susweb as sus
+import numpy as np
+from math import acos, degrees
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
@@ -14,8 +16,8 @@ resolution =(800,600)
 
 class ThreadedCamera(object):
     def __init__(self, src=0):
-        #self.capture = cv2.VideoCapture(src, cv2.CAP_V4L)
-        self.capture = cv2.VideoCapture(src)
+        self.capture = cv2.VideoCapture(src, cv2.CAP_V4L)
+        #self.capture = cv2.VideoCapture(src)
         self.FPS = 1/100
         self.FPS_MS = int(self.FPS * 1000)
         self.thread = Thread(target=self.update, args=())
@@ -131,9 +133,43 @@ class ThreadedCamera(object):
                 cv2.line(frame_resized, (x_right_ankle, y_right_ankle), (x_right_heel, y_right_heel), (0,0,0), 2)
                 cv2.line(frame_resized, (x_right_heel, y_right_heel), (x_right_foot_index, y_right_foot_index), (0,0,0), 2)
                 cv2.line(frame_resized, (x_right_foot_index, y_right_foot_index), (x_right_ankle, y_right_ankle), (0,0,0), 2)
-                # Calculo de angulos right arm and legs 
+                
+                # Calculo de angulos right leg
+                #Se aplica el teorema del coseno
+                pepe =None
+                for i in pepe:
+                    print()
+                p1 = np.array([x_right_hip, y_right_hip])
+                p2 = np.array([x_right_knee, y_right_knee])            
+                p3 = np.array([x_right_ankle, y_right_ankle]) 
+            
+                l1 = np.linalg.norm(p2 - p3)
+                l2 = np.linalg.norm(p1 - p3)
+                l3 = np.linalg.norm(p1 - p2)
+                
+                #Calcular el ángulo
+                
+                angle = degrees(acos((l1**2 + l3**2 - l2**2) / (2 * l1 * l3)))
+                #print( angle)
+                
+                #listaAngle.append(angle)
+                #Visualizacion
+                
+                cv2.line(frame_resized, (x_right_hip, y_right_hip), (x_right_knee, y_right_knee), (255, 255, 0), 5)
+                cv2.line(frame_resized, (x_right_knee, y_right_knee), (x_right_ankle, y_right_ankle), (255, 255, 0), 5)
+                cv2.line(frame_resized, (x_right_hip, y_right_hip), (x_right_ankle, y_right_ankle), (255, 255, 0), 5)
+
+                #Unimos la etiqueta en el frame_resized
+                #cv2.putText(frame_resized, str(int(angle)), (x_right_ankle + 30, y_right_ankle), 1, 1.5, (128, 0, 250), 2)
+                # Draw the line
+                
+                # Add text above the line
+                text = str(int(angle))
+                text_position = ((x_right_knee + x_right_ankle) // 2, min(y_right_knee, y_right_ankle) - 10)
+                cv2.putText(frame_resized, text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 3.5, (0,0,0), 1, cv2.LINE_AA)
+
                 #Visualizacion de datos 
-                for name, landmark in zip(["left_shoulder", "left_elbow", "left_wrist", "left_hip", "left_knee", "left_ankle", "left_heel", "left_foot_index",
+                """for name, landmark in zip(["left_shoulder", "left_elbow", "left_wrist", "left_hip", "left_knee", "left_ankle", "left_heel", "left_foot_index",
                                        "right_shoulder", "right_elbow", "right_wrist", "right_hip", "right_knee", "right_ankle", "right_heel", "right_foot_index"],
                                       [left_shoulder_landmark, left_elbow_landmark, left_wrist_landmark,
                                        left_hip_landmark, left_knee_landmark, left_ankle_landmark,
@@ -143,7 +179,7 @@ class ThreadedCamera(object):
                                        right_heel_landmark, right_foot_index_landmark]):
                     x, y, z = landmark.x, landmark.y, landmark.z
                     cv2.putText(frame_resized, f"({x},{y},{z})", (int(x * frame_resized.shape[1]), int(y * frame_resized.shape[0])),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1, cv2.LINE_AA)
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1, cv2.LINE_AA)"""
                 
                 #print (f"right_shoulder x: {x_right_shoulder} Y: {y_right_shoulder} z: {sus.position_frame(x_right_shoulder, y_right_shoulder)}")
                 
@@ -155,10 +191,10 @@ class ThreadedCamera(object):
         results = self.hands.process(frame_rgb)
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                for index, landmark in enumerate(hand_landmarks.landmark):
+                """for index, landmark in enumerate(hand_landmarks.landmark):
                     x, y, z = landmark.x, landmark.y, landmark.z
                     cv2.putText(frame_resized, f"({x:.2f},{y:.2f},{z:.2f})", (int(x * frame_resized.shape[1]), int(y * frame_resized.shape[0])),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 2, cv2.LINE_AA)
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 2, cv2.LINE_AA)"""
                     
             mp_drawing.draw_landmarks(
                 frame_resized, hand_landmarks, mp_hands.HAND_CONNECTIONS,
@@ -176,8 +212,8 @@ class ThreadedCamera(object):
             cv2.waitKey(self.FPS_MS)
 
 if __name__ == '__main__':
-    #src = 0
-    src = 'udp://0.0.0.0:6000?overrun_nonfatal=1'
+    src = 0
+    #src = 'udp://0.0.0.0:6000?overrun_nonfatal=1'
 
     threaded_camera = ThreadedCamera(src)
 
