@@ -23,7 +23,7 @@ class ThreadedCamera(object):
         self.thread = Thread(target=self.update, args=())
         self.thread.daemon = True
         self.thread.start() 
-        self.pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.9,min_tracking_confidence=0.9,model_complexity=1,smooth_landmarks= True)
+        self.pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.9,min_tracking_confidence=0.9,model_complexity=1, smooth_landmarks= True)
         self.hands = mp_hands.Hands(static_image_mode=False, min_detection_confidence=0.9,min_tracking_confidence=0.9,model_complexity=1)
         self.up = False
         self.down = False
@@ -42,7 +42,6 @@ class ThreadedCamera(object):
         
         if results_skeleto.pose_landmarks is not None:
             if results_skeleto.pose_landmarks is not None:
-                #left body impar numbers
                 #numbers of landmarks 11,13,15,23,25,27,29,31
                 left_shoulder_landmark = results_skeleto.pose_landmarks.landmark[11]
                 left_elbow_landmark = results_skeleto.pose_landmarks.landmark[13]
