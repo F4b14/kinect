@@ -16,8 +16,8 @@ resolution =(800,600)
 
 class ThreadedCamera(object):
     def __init__(self, src=0):
-        self.capture = cv2.VideoCapture(src, cv2.CAP_V4L)
-        #self.capture = cv2.VideoCapture(src)
+        #self.capture = cv2.VideoCapture(src, cv2.CAP_V4L)
+        self.capture = cv2.VideoCapture(src)
         self.FPS = 1/100
         self.FPS_MS = int(self.FPS * 1000)
         self.thread = Thread(target=self.update, args=())
@@ -80,8 +80,8 @@ class ThreadedCamera(object):
                 right_hip_landmark = results_skeleto.pose_landmarks.landmark[24]
                 right_knee_landmark = results_skeleto.pose_landmarks.landmark[26]
                 right_ankle_landmark = results_skeleto.pose_landmarks.landmark[28]
-                right_heel_landmark = results_skeleto.pose_landmarks.landmark[32]
-                right_foot_index_landmark = results_skeleto.pose_landmarks.landmark[30]
+                right_heel_landmark = results_skeleto.pose_landmarks.landmark[30]
+                right_foot_index_landmark = results_skeleto.pose_landmarks.landmark[32]
                 
                 # X and y right body 
                 x_right_shoulder, y_right_shoulder = int(right_shoulder_landmark.x * frame_resized.shape[1]), int(right_shoulder_landmark.y * frame_resized.shape[0])
@@ -135,38 +135,43 @@ class ThreadedCamera(object):
                 cv2.line(frame_resized, (x_right_foot_index, y_right_foot_index), (x_right_ankle, y_right_ankle), (0,0,0), 2)
                 
                 # Calculo de angulos right leg
-                #Se aplica el teorema del coseno
-                pepe =None
-                for i in pepe:
-                    print()
-                p1 = np.array([x_right_hip, y_right_hip])
-                p2 = np.array([x_right_knee, y_right_knee])            
-                p3 = np.array([x_right_ankle, y_right_ankle]) 
-            
-                l1 = np.linalg.norm(p2 - p3)
-                l2 = np.linalg.norm(p1 - p3)
-                l3 = np.linalg.norm(p1 - p2)
+                #Listad de angulos
+                Angle_leg_R =[[x_right_hip,y_right_hip],[x_right_knee,y_right_knee],[x_right_ankle,y_right_ankle]]
+                Angle_leg_L =[[x_left_hip,y_left_hip],[x_left_knee,y_left_knee],[x_left_ankle,y_left_ankle]]
+                Angle_foot_R=[[x_right_knee,y_right_knee],[x_right_ankle,y_right_ankle],[x_right_foot_index,y_right_foot_index]]
+                Angle_foot_L=[[x_left_knee,y_left_knee],[x_left_ankle,y_left_ankle],[x_left_foot,y_left_foot]]
+                Angle_arm_R=[[x_right_shoulder,y_right_shoulder],[x_right_elbow,y_right_elbow],[x_right_wrist,y_right_wrist]]
+                Angle_arm_L=[[x_left_shoulder,y_left_shoulder],[x_left_elbow,y_left_elbow],[x_left_wrist,y_left_wrist]]
+                Angle_incline_R=[[x_right_shoulder,y_right_shoulder],[x_right_hip,y_right_hip],[x_right_ankle,y_right_ankle]]
+                Angle_incline_L=[[x_left_shoulder,y_left_shoulder],[x_left_hip,y_left_hip],[x_left_ankle,y_left_ankle]]
                 
-                #Calcular el ángulo
+                for landmark in zip([Angle_leg_R,Angle_leg_L,Angle_foot_R,Angle_foot_L,Angle_arm_R,Angle_arm_L,Angle_incline_R,Angle_incline_L]):
+                    for i in landmark:
+                        p1 = np.array(i[0])
+                        p2 = np.array(i[1])            
+                        p3 = np.array(i[2]) 
                 
-                angle = degrees(acos((l1**2 + l3**2 - l2**2) / (2 * l1 * l3)))
-                #print( angle)
-                
-                #listaAngle.append(angle)
-                #Visualizacion
-                
-                cv2.line(frame_resized, (x_right_hip, y_right_hip), (x_right_knee, y_right_knee), (255, 255, 0), 5)
-                cv2.line(frame_resized, (x_right_knee, y_right_knee), (x_right_ankle, y_right_ankle), (255, 255, 0), 5)
-                cv2.line(frame_resized, (x_right_hip, y_right_hip), (x_right_ankle, y_right_ankle), (255, 255, 0), 5)
+                        l1 = np.linalg.norm(p2 - p3)
+                        l2 = np.linalg.norm(p1 - p3)
+                        l3 = np.linalg.norm(p1 - p2)
+                        
+                        #Calcular el ángulo
+                       
+                        angle = degrees(acos((l1**2 + l3**2 - l2**2) / (2 * l1 * l3)))
+                        #print( angle)
+                        
+                        #listaAngle.append(angle)
+                        #Visualizacion
+                        x=0
+                        y=1
+                        cv2.line(frame_resized, (i[0][x],i[0][y]), (i[1][x],i[1][y]), (255, 255, 0), 5)
+                        cv2.line(frame_resized, (i[1][x],i[1][y]), (i[2][x],i[2][y]), (255, 255, 0), 5)
+                        cv2.line(frame_resized, (i[0][x],i[0][y]), (i[2][x],i[2][y]), (255, 255, 0), 5)
 
-                #Unimos la etiqueta en el frame_resized
-                #cv2.putText(frame_resized, str(int(angle)), (x_right_ankle + 30, y_right_ankle), 1, 1.5, (128, 0, 250), 2)
-                # Draw the line
-                
-                # Add text above the line
-                text = str(int(angle))
-                text_position = ((x_right_knee + x_right_ankle) // 2, min(y_right_knee, y_right_ankle) - 10)
-                cv2.putText(frame_resized, text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 3.5, (0,0,0), 1, cv2.LINE_AA)
+                        # Add text above the line
+                        text = str(int(angle))
+                        text_position = ((i[1][0] + i[2][0]) // 2, min(i[1][1], i[2][1]) - 10)
+                        cv2.putText(frame_resized, text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,0,0), 1, cv2.LINE_AA)
 
                 #Visualizacion de datos 
                 """for name, landmark in zip(["left_shoulder", "left_elbow", "left_wrist", "left_hip", "left_knee", "left_ankle", "left_heel", "left_foot_index",
@@ -212,8 +217,8 @@ class ThreadedCamera(object):
             cv2.waitKey(self.FPS_MS)
 
 if __name__ == '__main__':
-    src = 0
-    #src = 'udp://0.0.0.0:6000?overrun_nonfatal=1'
+    #src = 0
+    src = 'udp://0.0.0.0:6000?overrun_nonfatal=1'
 
     threaded_camera = ThreadedCamera(src)
 
