@@ -1,4 +1,4 @@
-# Version 2.0
+# Version 3.0
 
 #Distance detecion hands 2.7 mt
 import cv2
