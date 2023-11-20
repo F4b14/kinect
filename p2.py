@@ -12,22 +12,21 @@ from math import acos, degrees
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 mp_hands = mp.solutions.hands
-resolution =(800,600)
+resolution =(512,424)
 
 class ThreadedCamera(object):
     def __init__(self, src=0):
         #Capturar por camara ,descomentar para usar camara.., comentar para usar streaming 
-        self.capture = cv2.VideoCapture(src, cv2.CAP_V4L)
+        #self.capture = cv2.VideoCapture(src, cv2.CAP_V4L)
         #Capturar camara Kinect via streaming, descomentar para usar streaming,comentar para usar camara, 
-        #self.capture = cv2.VideoCapture(src)
+        self.capture = cv2.VideoCapture(src)
         self.FPS = 1/100
         self.FPS_MS = int(self.FPS * 1000)
         self.thread = Thread(target=self.update, args=())
         self.thread.daemon = True
         self.thread.start()
         #Parametros body
-        #model_complexity=1 default model_complexity=2 da error investiga esto Carlos  
-        self.pose =  mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.9,min_tracking_confidence=0.9,model_complexity=1, smooth_landmarks= True)
+        self.pose =  mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.9,min_tracking_confidence=0.9,model_complexity=2, smooth_landmarks= True)
         #Parametros Hands
         self.hands = mp_hands.Hands(static_image_mode=False, min_detection_confidence=0.9,min_tracking_confidence=0.9,model_complexity=1)
 
@@ -35,6 +34,8 @@ class ThreadedCamera(object):
         while True:
             if self.capture is not None and self.capture.isOpened():
                 (self.status, self.frame) = self.capture.read()
+                # Aplicar el recorte (cropping) aquí
+                self.frame = self.frame[704:1216, 328:752]
             time.sleep(self.FPS)
     
     # Nico aqui esta la funcion del cuerpo 
@@ -147,7 +148,7 @@ class ThreadedCamera(object):
                 Angle_incline_L=[[x_left_shoulder,y_left_shoulder],[x_left_hip,y_left_hip],[x_left_ankle,y_left_ankle]]
                 
                 # Calculo de angulos 
-                for landmark in zip([Angle_leg_R,Angle_leg_L,Angle_foot_R,Angle_foot_L,Angle_arm_R,Angle_arm_L,Angle_incline_R,Angle_incline_L]):
+                """for landmark in zip([Angle_leg_R,Angle_leg_L,Angle_foot_R,Angle_foot_L,Angle_arm_R,Angle_arm_L,Angle_incline_R,Angle_incline_L]):
                     for i in landmark:
                         p1 = np.array(i[0])
                         p2 = np.array(i[1])            
@@ -164,15 +165,15 @@ class ThreadedCamera(object):
                         #Visualizacion de lineas
                         x=0
                         y=1
-                        cv2.line(frame_resized, (i[0][x],i[0][y]), (i[1][x],i[1][y]), (255, 255, 0), 5)
-                        cv2.line(frame_resized, (i[1][x],i[1][y]), (i[2][x],i[2][y]), (255, 255, 0), 5)
-                        cv2.line(frame_resized, (i[0][x],i[0][y]), (i[2][x],i[2][y]), (255, 255, 0), 5)
+                        cv2.line(frame_resized, (i[0][x],i[0][y]), (i[1][x],i[1][y]), (255, 255, 0), 4)
+                        cv2.line(frame_resized, (i[1][x],i[1][y]), (i[2][x],i[2][y]), (255, 255, 0), 4)
+                        cv2.line(frame_resized, (i[0][x],i[0][y]), (i[2][x],i[2][y]), (255, 255, 0), 4)
 
                         # agregar el texto sobre la linea 
                         text = str(int(angle))
                         text_position = ((i[1][0] + i[2][0]) // 2, min(i[1][1], i[2][1]) - 10)
                         cv2.putText(frame_resized, text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,0,0), 1, cv2.LINE_AA)
-
+"""
                 #Visualizacion de datos 
                 """for name, landmark in zip(["left_shoulder", "left_elbow", "left_wrist", "left_hip", "left_knee", "left_ankle", "left_heel", "left_foot_index",
                                        "right_shoulder", "right_elbow", "right_wrist", "right_hip", "right_knee", "right_ankle", "right_heel", "right_foot_index"],
@@ -186,7 +187,7 @@ class ThreadedCamera(object):
                     cv2.putText(frame_resized, f"({x},{y},{z})", (int(x * frame_resized.shape[1]), int(y * frame_resized.shape[0])),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1, cv2.LINE_AA)"""
                 #Obtencion de z mediante susweb  entreganto x e y de punto seleccionado 
-                #print (f"right_shoulder x: {x_right_shoulder} Y: {y_right_shoulder} z: {sus.position_frame(x_right_shoulder, y_right_shoulder)}")
+                print (f"right_shoulder x: {x_right_shoulder} Y: {y_right_shoulder} z: {sus.position_frame(x_right_shoulder, y_right_shoulder)}")
                 
         return frame_resized
     
@@ -218,8 +219,8 @@ class ThreadedCamera(object):
             cv2.waitKey(self.FPS_MS)
 
 if __name__ == '__main__':
-    src = 0
-    #src = 'udp://0.0.0.0:6000?overrun_nonfatal=1'
+    #src = 0
+    src = 'udp://0.0.0.0:6000?overrun_nonfatal=1'
     threaded_camera = ThreadedCamera(src)
     while True:
         try:
